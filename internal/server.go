@@ -1,6 +1,7 @@
 package tfa
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -83,6 +84,8 @@ func (s *Server) AuthHandler(providerName, rule string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Logging setup
 		logger := s.logger(r, "Auth", rule, "Authenticating request")
+
+    fmt.Printf("-> hello\n")
 
 		// Get auth cookie
 		c, err := r.Cookie(config.CookieName)
