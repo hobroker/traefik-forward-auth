@@ -66,6 +66,8 @@ func NewGlobalConfig() *Config {
 		os.Exit(1)
 	}
 
+  fmt.Println(config)
+
 	return config
 }
 
