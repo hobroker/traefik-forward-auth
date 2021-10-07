@@ -1,7 +1,6 @@
 package tfa
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -88,9 +87,7 @@ func (s *Server) AuthHandler(providerName, rule string) http.HandlerFunc {
 		var shouldAuthenticate = true
 
 		for name, values := range r.Header {
-			// Loop over all values for the name.
 			for _, value := range values {
-				fmt.Println(name, value)
 				if value == config.WhitelistedHeadersMap[name] {
 					shouldAuthenticate = false
 					logger.Debug("Allowing valid  because of whitelisted header", name)
