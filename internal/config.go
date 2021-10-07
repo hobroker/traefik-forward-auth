@@ -56,7 +56,7 @@ type Config struct {
 	ClientIdLegacy      string        `long:"client-id" env:"CLIENT_ID" description:"DEPRECATED - Use \"providers.google.client-id\""`
 	ClientSecretLegacy  string        `long:"client-secret" env:"CLIENT_SECRET" description:"DEPRECATED - Use \"providers.google.client-id\""  json:"-"`
 	PromptLegacy        string        `long:"prompt" env:"PROMPT" description:"DEPRECATED - Use \"providers.google.prompt\""`
-	WhitelistedHeader   []string      `long:"whitelisted-headers" env:"WHITELISTED_HEADERS" description:"Skip auth for these headers with values"`
+	WhitelistedHeader   []string      `long:"whitelisted-header" env:"WHITELISTED_HEADERS" description:"Skip auth for these headers with values"`
 }
 
 // NewGlobalConfig creates a new global config, parsed from command arguments
@@ -99,8 +99,13 @@ func NewConfig(args []string) (*Config, error) {
 		}
 	}
 
-	for _, rule := range c.WhitelistedHeader {
-		fmt.Println("rule", rule)
+	for _, item := range c.WhitelistedHeader {
+		// c.WhitelistedHeadersMap[]
+		var split = strings.Split(item, ":")
+		var key = split[0]
+		var value = split[1]
+		c.WhitelistedHeadersMap[key] = value
+		fmt.Println("rule", key, value, c.WhitelistedHeadersMap)
 	}
 
 	// Backwards compatability
