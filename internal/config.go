@@ -78,7 +78,8 @@ func NewGlobalConfig() *Config {
 // NewConfig parses and validates provided configuration into a config object
 func NewConfig(args []string) (*Config, error) {
 	c := &Config{
-		Rules: map[string]*Rule{},
+		WhitelistedHeadersMap: map[string]string{},
+		Rules:                 map[string]*Rule{},
 	}
 
 	err := c.parseFlags(args)
@@ -100,7 +101,6 @@ func NewConfig(args []string) (*Config, error) {
 	}
 
 	for _, item := range c.WhitelistedHeader {
-		// c.WhitelistedHeadersMap[]
 		var split = strings.Split(item, ":")
 		var key = split[0]
 		var value = split[1]
