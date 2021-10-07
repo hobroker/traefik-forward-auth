@@ -100,15 +100,16 @@ func NewConfig(args []string) (*Config, error) {
 		}
 	}
 
-	var whitelistedHeadersMap = strings.Split(c.WhitelistedHeaders, ";")
-	for _, item := range whitelistedHeadersMap {
-		var split = strings.Split(item, ":")
-		var key = split[0]
-		var value = split[1]
-		c.WhitelistedHeadersMap[key] = value
-		fmt.Println("rule", key, value)
+	if c.WhitelistedHeaders != "" {
+		var whitelistedHeadersMap = strings.Split(c.WhitelistedHeaders, ";")
+		for _, item := range whitelistedHeadersMap {
+			var split = strings.Split(item, ":")
+			var key = split[0]
+			var value = split[1]
+
+			c.WhitelistedHeadersMap[key] = value
+		}
 	}
-	fmt.Println("c.WhitelistedHeadersMap", c.WhitelistedHeadersMap)
 
 	// Backwards compatability
 	if c.CookieSecretLegacy != "" && c.SecretString == "" {
