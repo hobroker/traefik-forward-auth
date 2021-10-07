@@ -85,42 +85,47 @@ func (s *Server) AuthHandler(providerName, rule string) http.HandlerFunc {
 		// Logging setup
 		logger := s.logger(r, "Auth", rule, "Authenticating request")
 
+		var shouldSkipAuth = false
+
 		for name, values := range r.Header {
 			// Loop over all values for the name.
 			for _, value := range values {
 				fmt.Println(name, value)
 				if value == config.WhitelistedHeadersMap[name] {
 					fmt.Println("allowed because above")
+					shouldSkipAuth = true
 				}
 			}
 		}
 
-		// Get auth cookie
-		c, err := r.Cookie(config.CookieName)
-		if err != nil {
-			s.authRedirect(logger, w, r, p)
-			return
-		}
-
-		// Validate cookie
-		email, err := ValidateCookie(r, c)
-		if err != nil {
-			if err.Error() == "Cookie has expired" {
-				logger.Info("Cookie has expired")
+		if shouldSkipAuth {
+			// Get auth cookie
+			c, err := r.Cookie(config.CookieName)
+			if err != nil {
 				s.authRedirect(logger, w, r, p)
-			} else {
-				logger.WithField("error", err).Warn("Invalid cookie")
-				http.Error(w, "Not authorized", 401)
+				return
 			}
-			return
-		}
 
-		// Validate user
-		valid := ValidateEmail(email, rule)
-		if !valid {
-			logger.WithField("email", email).Warn("Invalid email")
-			http.Error(w, "Not authorized", 401)
-			return
+			// Validate cookie
+			email, err := ValidateCookie(r, c)
+			if err != nil {
+				if err.Error() == "Cookie has expired" {
+					logger.Info("Cookie has expired")
+					s.authRedirect(logger, w, r, p)
+				} else {
+					logger.WithField("error", err).Warn("Invalid cookie")
+					http.Error(w, "Not authorized", 401)
+				}
+				return
+			}
+
+			// Validate user
+			valid := ValidateEmail(email, rule)
+			if !valid {
+				logger.WithField("email", email).Warn("Invalid email")
+				http.Error(w, "Not authorized", 401)
+				return
+			}
 		}
 
 		// Valid request
