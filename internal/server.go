@@ -85,20 +85,20 @@ func (s *Server) AuthHandler(providerName, rule string) http.HandlerFunc {
 		// Logging setup
 		logger := s.logger(r, "Auth", rule, "Authenticating request")
 
-		var shouldSkipAuth = false
+		var shouldAuthenticate = true
 
 		for name, values := range r.Header {
 			// Loop over all values for the name.
 			for _, value := range values {
 				fmt.Println(name, value)
 				if value == config.WhitelistedHeadersMap[name] {
-					fmt.Println("allowed because above")
-					shouldSkipAuth = true
+					shouldAuthenticate = false
+					logger.Debug("Allowing valid  because of whitelisted header", name)
 				}
 			}
 		}
 
-		if shouldSkipAuth {
+		if shouldAuthenticate {
 			// Get auth cookie
 			c, err := r.Cookie(config.CookieName)
 			if err != nil {
@@ -126,11 +126,12 @@ func (s *Server) AuthHandler(providerName, rule string) http.HandlerFunc {
 				http.Error(w, "Not authorized", 401)
 				return
 			}
+
+			w.Header().Set("X-Forwarded-User", email)
 		}
 
 		// Valid request
 		logger.Debug("Allowing valid request")
-		w.Header().Set("X-Forwarded-User", email)
 		w.WriteHeader(200)
 	}
 }
