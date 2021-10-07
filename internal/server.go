@@ -14,6 +14,15 @@ type Server struct {
 	router *rules.Router
 }
 
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 // NewServer creates a new server object and builds router
 func NewServer() *Server {
 	s := &Server{}
@@ -88,7 +97,7 @@ func (s *Server) AuthHandler(providerName, rule string) http.HandlerFunc {
 
 		for name, values := range r.Header {
 			for _, value := range values {
-				if value == config.WhitelistedHeadersMap[name] {
+				if stringInSlice(value, config.WhitelistedHeadersMap[name]) {
 					shouldAuthenticate = false
 					logger.Debug("Allowing valid  because of whitelisted header", name)
 				}

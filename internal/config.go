@@ -41,9 +41,9 @@ type Config struct {
 	Whitelist              CommaSeparatedList   `long:"whitelist" env:"WHITELIST" env-delim:"," description:"Only allow given email addresses, can be set multiple times"`
 	Port                   int                  `long:"port" env:"PORT" default:"4181" description:"Port to listen on"`
 
-	Providers             provider.Providers `group:"providers" namespace:"providers" env-namespace:"PROVIDERS"`
-	Rules                 map[string]*Rule   `long:"rule.<name>.<param>" description:"Rule definitions, param can be: \"action\", \"rule\" or \"provider\""`
-	WhitelistedHeadersMap map[string]string  `group:"whitelistedHeadersMap" description:"Whitelisted Headers"`
+	Providers             provider.Providers  `group:"providers" namespace:"providers" env-namespace:"PROVIDERS"`
+	Rules                 map[string]*Rule    `long:"rule.<name>.<param>" description:"Rule definitions, param can be: \"action\", \"rule\" or \"provider\""`
+	WhitelistedHeadersMap map[string][]string `group:"whitelistedHeadersMap" description:"Whitelisted Headers"`
 
 	// Filled during transformations
 	Secret   []byte `json:"-"`
@@ -78,7 +78,7 @@ func NewGlobalConfig() *Config {
 // NewConfig parses and validates provided configuration into a config object
 func NewConfig(args []string) (*Config, error) {
 	c := &Config{
-		WhitelistedHeadersMap: map[string]string{},
+		WhitelistedHeadersMap: map[string][]string{},
 		Rules:                 map[string]*Rule{},
 	}
 
@@ -107,7 +107,7 @@ func NewConfig(args []string) (*Config, error) {
 			var key = split[0]
 			var value = split[1]
 
-			c.WhitelistedHeadersMap[key] = value
+			c.WhitelistedHeadersMap[key] = append(c.WhitelistedHeadersMap[key], value)
 		}
 	}
 
