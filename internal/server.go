@@ -14,6 +14,15 @@ type Server struct {
 	router *rules.Router
 }
 
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 // NewServer creates a new server object and builds router
 func NewServer() *Server {
 	s := &Server{}
@@ -84,37 +93,51 @@ func (s *Server) AuthHandler(providerName, rule string) http.HandlerFunc {
 		// Logging setup
 		logger := s.logger(r, "Auth", rule, "Authenticating request")
 
-		// Get auth cookie
-		c, err := r.Cookie(config.CookieName)
-		if err != nil {
-			s.authRedirect(logger, w, r, p)
-			return
-		}
+		var shouldAuthenticate = true
 
-		// Validate cookie
-		email, err := ValidateCookie(r, c)
-		if err != nil {
-			if err.Error() == "Cookie has expired" {
-				logger.Info("Cookie has expired")
-				s.authRedirect(logger, w, r, p)
-			} else {
-				logger.WithField("error", err).Warn("Invalid cookie")
-				http.Error(w, "Not authorized", 401)
+		for name, values := range r.Header {
+			for _, value := range values {
+				if stringInSlice(value, config.WhitelistedHeadersMap[name]) {
+					shouldAuthenticate = false
+					logger.Debug("Allowing valid  because of whitelisted header", name)
+				}
 			}
-			return
 		}
 
-		// Validate user
-		valid := ValidateEmail(email, rule)
-		if !valid {
-			logger.WithField("email", email).Warn("Invalid email")
-			http.Error(w, "Not authorized", 401)
-			return
+		if shouldAuthenticate {
+			// Get auth cookie
+			c, err := r.Cookie(config.CookieName)
+			if err != nil {
+				s.authRedirect(logger, w, r, p)
+				return
+			}
+
+			// Validate cookie
+			email, err := ValidateCookie(r, c)
+			if err != nil {
+				if err.Error() == "Cookie has expired" {
+					logger.Info("Cookie has expired")
+					s.authRedirect(logger, w, r, p)
+				} else {
+					logger.WithField("error", err).Warn("Invalid cookie")
+					http.Error(w, "Not authorized", 401)
+				}
+				return
+			}
+
+			// Validate user
+			valid := ValidateEmail(email, rule)
+			if !valid {
+				logger.WithField("email", email).Warn("Invalid email")
+				http.Error(w, "Not authorized", 401)
+				return
+			}
+
+			w.Header().Set("X-Forwarded-User", email)
 		}
 
 		// Valid request
 		logger.Debug("Allowing valid request")
-		w.Header().Set("X-Forwarded-User", email)
 		w.WriteHeader(200)
 	}
 }

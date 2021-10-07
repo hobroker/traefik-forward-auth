@@ -41,8 +41,9 @@ type Config struct {
 	Whitelist              CommaSeparatedList   `long:"whitelist" env:"WHITELIST" env-delim:"," description:"Only allow given email addresses, can be set multiple times"`
 	Port                   int                  `long:"port" env:"PORT" default:"4181" description:"Port to listen on"`
 
-	Providers provider.Providers `group:"providers" namespace:"providers" env-namespace:"PROVIDERS"`
-	Rules     map[string]*Rule   `long:"rule.<name>.<param>" description:"Rule definitions, param can be: \"action\", \"rule\" or \"provider\""`
+	Providers             provider.Providers  `group:"providers" namespace:"providers" env-namespace:"PROVIDERS"`
+	Rules                 map[string]*Rule    `long:"rule.<name>.<param>" description:"Rule definitions, param can be: \"action\", \"rule\" or \"provider\""`
+	WhitelistedHeadersMap map[string][]string `group:"whitelistedHeadersMap" description:"Whitelisted Headers"`
 
 	// Filled during transformations
 	Secret   []byte `json:"-"`
@@ -55,6 +56,7 @@ type Config struct {
 	ClientIdLegacy      string        `long:"client-id" env:"CLIENT_ID" description:"DEPRECATED - Use \"providers.google.client-id\""`
 	ClientSecretLegacy  string        `long:"client-secret" env:"CLIENT_SECRET" description:"DEPRECATED - Use \"providers.google.client-id\""  json:"-"`
 	PromptLegacy        string        `long:"prompt" env:"PROMPT" description:"DEPRECATED - Use \"providers.google.prompt\""`
+	WhitelistedHeaders  string        `long:"whitelisted-headers" env:"WHITELISTED_HEADERS" description:"Skip auth for these headers with values"`
 }
 
 // NewGlobalConfig creates a new global config, parsed from command arguments
@@ -74,7 +76,8 @@ func NewGlobalConfig() *Config {
 // NewConfig parses and validates provided configuration into a config object
 func NewConfig(args []string) (*Config, error) {
 	c := &Config{
-		Rules: map[string]*Rule{},
+		WhitelistedHeadersMap: map[string][]string{},
+		Rules:                 map[string]*Rule{},
 	}
 
 	err := c.parseFlags(args)
@@ -92,6 +95,17 @@ func NewConfig(args []string) (*Config, error) {
 	for _, rule := range c.Rules {
 		if rule.Provider == "" {
 			rule.Provider = c.DefaultProvider
+		}
+	}
+
+	if c.WhitelistedHeaders != "" {
+		var whitelistedHeadersMap = strings.Split(c.WhitelistedHeaders, ";")
+		for _, item := range whitelistedHeadersMap {
+			var split = strings.Split(item, ":")
+			var key = split[0]
+			var value = split[1]
+
+			c.WhitelistedHeadersMap[key] = append(c.WhitelistedHeadersMap[key], value)
 		}
 	}
 
