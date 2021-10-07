@@ -1,7 +1,6 @@
 package tfa
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -17,9 +16,7 @@ type Server struct {
 
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
-		fmt.Println("comparing", a, b)
 		if b == a {
-			fmt.Println("-> found above")
 			return true
 		}
 	}
@@ -100,7 +97,7 @@ func (s *Server) AuthHandler(providerName, rule string) http.HandlerFunc {
 
 		for name, values := range r.Header {
 			for _, value := range values {
-				if len(config.WhitelistedHeadersMap[name]) != 0 && stringInSlice(value, config.WhitelistedHeadersMap[name]) {
+				if stringInSlice(value, config.WhitelistedHeadersMap[name]) {
 					shouldAuthenticate = false
 					logger.Debug("Allowing valid  because of whitelisted header", name)
 				}
