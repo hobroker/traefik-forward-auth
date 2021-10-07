@@ -41,8 +41,9 @@ type Config struct {
 	Whitelist              CommaSeparatedList   `long:"whitelist" env:"WHITELIST" env-delim:"," description:"Only allow given email addresses, can be set multiple times"`
 	Port                   int                  `long:"port" env:"PORT" default:"4181" description:"Port to listen on"`
 
-	Providers provider.Providers `group:"providers" namespace:"providers" env-namespace:"PROVIDERS"`
-	Rules     map[string]*Rule   `long:"rule.<name>.<param>" description:"Rule definitions, param can be: \"action\", \"rule\" or \"provider\""`
+	Providers             provider.Providers `group:"providers" namespace:"providers" env-namespace:"PROVIDERS"`
+	Rules                 map[string]*Rule   `long:"rule.<name>.<param>" description:"Rule definitions, param can be: \"action\", \"rule\" or \"provider\""`
+	WhitelistedHeadersMap map[string]string  `group:"whitelistedHeadersMap" description:"Whitelisted Headers"`
 
 	// Filled during transformations
 	Secret   []byte `json:"-"`
@@ -55,7 +56,7 @@ type Config struct {
 	ClientIdLegacy      string        `long:"client-id" env:"CLIENT_ID" description:"DEPRECATED - Use \"providers.google.client-id\""`
 	ClientSecretLegacy  string        `long:"client-secret" env:"CLIENT_SECRET" description:"DEPRECATED - Use \"providers.google.client-id\""  json:"-"`
 	PromptLegacy        string        `long:"prompt" env:"PROMPT" description:"DEPRECATED - Use \"providers.google.prompt\""`
-	WhitelistedHeaders     map[string]string    `long:"whitelisted-headers" env:"WHITELISTED_HEADERS" description:"Skip auth for these headers with values"`
+	WhitelistedHeader   []string      `long:"whitelisted-headers" env:"WHITELISTED_HEADERS" description:"Skip auth for these headers with values"`
 }
 
 // NewGlobalConfig creates a new global config, parsed from command arguments
@@ -67,7 +68,7 @@ func NewGlobalConfig() *Config {
 		os.Exit(1)
 	}
 
-  fmt.Println(config)
+	fmt.Println(config)
 
 	return config
 }
@@ -96,6 +97,10 @@ func NewConfig(args []string) (*Config, error) {
 		if rule.Provider == "" {
 			rule.Provider = c.DefaultProvider
 		}
+	}
+
+	for _, rule := range c.WhitelistedHeader {
+		fmt.Println("rule", rule)
 	}
 
 	// Backwards compatability
